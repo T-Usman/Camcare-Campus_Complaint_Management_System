@@ -31,6 +31,16 @@ export async function query(text, params) {
   return rows;
 }
 
+async function addColumnIfMissing(table, column, definition) {
+  const rows = await query(
+    'SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+    [DB_NAME, table, column]
+  );
+  if (rows[0].n === 0) {
+    await pool.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+  }
+}
+
 export async function initDb() {
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS users (
@@ -99,5 +109,39 @@ export async function initDb() {
       snippet TEXT NOT NULL,
       body TEXT NOT NULL
     )
+  `);
+
+  // Three-role upgrade: staff members log in through `users` (role 'staff'),
+  // complaints reference staff by id, and timeline rows record who acted.
+  await addColumnIfMissing('staff', 'user_id', 'VARCHAR(255) NULL');
+  await addColumnIfMissing('complaints', 'assigned_staff_id', 'VARCHAR(255) NULL');
+  await addColumnIfMissing('complaint_timeline', 'actor', 'VARCHAR(255) NULL');
+
+  // Some databases were upgraded by an earlier build in which
+  // complaints.assigned_staff_id was a foreign key to users.id. It now holds
+  // staff.id, so drop that constraint and remap the stored user ids.
+  const legacyFks = await query(
+    `SELECT CONSTRAINT_NAME AS name FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'complaints'
+       AND COLUMN_NAME = 'assigned_staff_id' AND REFERENCED_TABLE_NAME = 'users'`,
+    [DB_NAME]
+  );
+  for (const fk of legacyFks) {
+    await pool.execute(`ALTER TABLE complaints DROP FOREIGN KEY \`${fk.name}\``);
+  }
+  if (legacyFks.length > 0) {
+    await pool.execute(`
+      UPDATE complaints c
+      JOIN staff s ON s.user_id = c.assigned_staff_id
+      SET c.assigned_staff_id = s.id
+    `);
+  }
+
+  // Backfill assigned_staff_id for rows created before the column existed
+  await pool.execute(`
+    UPDATE complaints c
+    JOIN staff s ON s.name = c.assigned_to
+    SET c.assigned_staff_id = s.id
+    WHERE c.assigned_staff_id IS NULL
   `);
 }

@@ -17,7 +17,7 @@ export function StudentProfile() {
   const myComplaints = complaints.filter(c => c.student === studentUser.name || c.studentId === studentUser.id);
   const totalCount = myComplaints.length;
   const resolvedCount = myComplaints.filter(c => c.status === 'Resolved').length;
-  const pendingCount = myComplaints.filter(c => c.status === 'Pending').length;
+  const pendingCount = myComplaints.filter(c => c.status === 'Pending' || c.status === 'Verified').length;
   const highPriorityCount = myComplaints.filter(c => c.status === 'High Priority').length;
 
   const handleSave = (e) => {
@@ -71,7 +71,7 @@ export function StudentProfile() {
                   <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{resolvedCount}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Pending</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>Under Review</span>
                   <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{pendingCount}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
@@ -179,7 +179,7 @@ export function StudentProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Full Name
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {studentUser.name}
                   </div>
                 </div>
@@ -188,7 +188,7 @@ export function StudentProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Student ID
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {studentUser.id}
                   </div>
                 </div>
@@ -197,7 +197,7 @@ export function StudentProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Campus Email
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {studentUser.email}
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export function StudentProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Phone Number
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {studentUser.phone}
                   </div>
                 </div>
@@ -215,7 +215,7 @@ export function StudentProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Department / Programme
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {studentUser.department}
                   </div>
                 </div>
@@ -224,7 +224,7 @@ export function StudentProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Campus Residence
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {studentUser.residence}
                   </div>
                 </div>

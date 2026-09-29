@@ -4,12 +4,11 @@ import { ThemeToggle } from '../common/ThemeToggle';
 import { NotificationControl } from '../common/NotificationControl';
 
 export function Topbar({ title, subtitle }) {
-  const { userRole, studentUser, adminUser } = useApp();
+  const { userRole, studentUser, adminUser, staffUser } = useApp();
 
-  const isStudent = userRole === 'student';
-  const defaultTitle = isStudent
-    ? `Good morning, ${studentUser.name.split(' ')[0]}`
-    : `Good morning, ${adminUser.name}`;
+  const defaultTitle = userRole === 'admin'
+    ? `Good morning, ${adminUser.name}`
+    : `Good morning, ${(userRole === 'staff' ? staffUser : studentUser).name.split(' ')[0]}`;
   const defaultSubtitle = 'Campus complaint overview for today.';
 
   const formattedDate = 'Tue, Jul 29, 2026';

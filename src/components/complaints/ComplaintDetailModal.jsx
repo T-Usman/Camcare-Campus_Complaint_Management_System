@@ -1,37 +1,75 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Modal } from '../common/Modal';
 import { StatusDot } from '../common/StatusDot';
 import { UrgencyDot } from '../common/UrgencyDot';
+import { getAllowedActions, isNoteRequired } from './complaintWorkflow';
+
+const NOTE_REQUIRED_MESSAGES = {
+  reject: 'Enter a reason before rejecting this complaint.',
+  resolve: 'Describe how the issue was resolved.',
+  note: 'Enter a note first.'
+};
 
 export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
   const { userRole, staff, updateComplaint } = useApp();
 
-  const [selectedStaff, setSelectedStaff] = useState(complaint?.assignedTo || 'Unassigned');
-  const [selectedStatus, setSelectedStatus] = useState(complaint?.status || 'Pending');
-  const [adminNote, setAdminNote] = useState('');
+  const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [actionNote, setActionNote] = useState('');
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [prevComplaint, setPrevComplaint] = useState(complaint);
 
-  useEffect(() => {
-    if (complaint) {
-      setSelectedStaff(complaint.assignedTo || 'Unassigned');
-      setSelectedStatus(complaint.status || 'Pending');
-      setAdminNote('');
-    }
-  }, [complaint]);
+  // Reset the action form whenever a different complaint is opened
+  if (complaint !== prevComplaint) {
+    setPrevComplaint(complaint);
+    setSelectedStaffId('');
+    setActionNote('');
+    setFormError('');
+  }
 
   if (!complaint) return null;
 
-  const isAdmin = userRole === 'admin';
+  const allowedActions = getAllowedActions(complaint, userRole);
+  const canAssign = allowedActions.includes('assign');
+  const buttonActions = allowedActions.filter(a => a !== 'assign' && a !== 'note');
+  const assignableStaff = staff.filter(s => s.id !== complaint.assignedStaffId);
 
-  const handleSaveAdminChanges = (e) => {
-    e.preventDefault();
-    updateComplaint(complaint.id, {
-      assignedTo: selectedStaff,
-      status: selectedStatus,
-      note: adminNote || `Updated by Administrator`
+  const runAction = async (action) => {
+    const note = actionNote.trim();
+    if (isNoteRequired(action, userRole) && !note) {
+      setFormError(NOTE_REQUIRED_MESSAGES[action]);
+      return;
+    }
+    if (action === 'assign' && !selectedStaffId) {
+      setFormError('Select a staff member to assign.');
+      return;
+    }
+
+    setFormError('');
+    setIsSubmitting(true);
+    const updated = await updateComplaint(complaint.id, {
+      action,
+      note,
+      ...(action === 'assign' ? { staffId: selectedStaffId } : {})
     });
-    onClose();
+    setIsSubmitting(false);
+    if (updated) onClose();
   };
+
+  const ACTION_BUTTONS = {
+    verify: { label: 'Verify Complaint', className: 'btn-primary' },
+    start: { label: 'Start Work', className: 'btn-primary' },
+    resolve: {
+      label: 'Mark Resolved',
+      className: userRole === 'staff' && complaint.status === 'In Progress' ? 'btn-primary' : 'btn-secondary'
+    },
+    reject: { label: 'Reject', className: 'btn-secondary' }
+  };
+
+  const noteHint = userRole === 'staff'
+    ? 'Required when marking resolved. Visible to the student.'
+    : 'Required to reject. Optional for other actions. Visible to the student.';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Complaint ${complaint.id}`} maxWidth="620px">
@@ -40,7 +78,7 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span className="badge-pill">{complaint.category}</span>
-            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
               Reported {complaint.date} ({complaint.agingDays}d ago)
             </span>
           </div>
@@ -85,20 +123,26 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
           }}
         >
           <div>
-            <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '11.5px' }}>Location</span>
+            <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '12px' }}>Location</span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{complaint.location}</span>
           </div>
           <div>
-            <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '11.5px' }}>Reported By</span>
+            <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '12px' }}>Reported By</span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
               {complaint.student} ({complaint.studentId})
+            </span>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '12px' }}>Assigned To</span>
+            <span style={{ color: complaint.assignedStaffId ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500 }}>
+              {complaint.assignedStaffId ? complaint.assignedTo : 'Not assigned'}
             </span>
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '11.5px', marginBottom: '4px' }}>
+          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '12px', marginBottom: '4px' }}>
             Description
           </span>
           <p
@@ -120,7 +164,7 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
         {/* Attached Photo Evidence */}
         {complaint.photo && (
           <div>
-            <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '11.5px', marginBottom: '6px' }}>
+            <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '12px', marginBottom: '6px' }}>
               Attached Photo Evidence
             </span>
             <div
@@ -150,7 +194,7 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
 
         {/* Progress Timeline */}
         <div>
-          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '11.5px', marginBottom: '8px' }}>
+          <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '12px', marginBottom: '8px' }}>
             Resolution Timeline
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -180,16 +224,19 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
                     <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{t.time}</span>
                   </div>
                   <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>{t.note}</div>
+                  {t.actor && (
+                    <div style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>by {t.actor}</div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Admin Management Controls */}
-        {isAdmin && (
+        {/* Workflow Actions (admin, or the staff member assigned to this complaint) */}
+        {allowedActions.length > 0 && (
           <form
-            onSubmit={handleSaveAdminChanges}
+            onSubmit={(e) => e.preventDefault()}
             style={{
               marginTop: '10px',
               paddingTop: '16px',
@@ -197,61 +244,83 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
             }}
           >
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px' }}>
-              Admin Triage & Assignment
+              {userRole === 'admin' ? 'Admin Actions' : 'Staff Actions'}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" htmlFor="admin-assign-staff">Assign Staff Officer</label>
-                <select
-                  id="admin-assign-staff"
-                  className="form-select"
-                  value={selectedStaff}
-                  onChange={(e) => setSelectedStaff(e.target.value)}
-                >
-                  <option value="Unassigned">Unassigned</option>
-                  {staff.map(s => (
-                    <option key={s.id} value={s.name}>
-                      {s.name} ({s.department})
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" htmlFor="admin-change-status">Update Status</label>
-                <select
-                  id="admin-change-status"
-                  className="form-select"
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="High Priority">High Priority</option>
-                  <option value="Resolved">Resolved</option>
-                </select>
+            {canAssign && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="action-assign-staff">
+                  {complaint.assignedStaffId ? 'Reassign to Staff Member' : 'Assign to Staff Member'}
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    id="action-assign-staff"
+                    className="form-select"
+                    value={selectedStaffId}
+                    onChange={(e) => setSelectedStaffId(e.target.value)}
+                    style={{ flex: 1 }}
+                  >
+                    <option value="">Select staff member</option>
+                    {assignableStaff.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.department})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    disabled={isSubmitting}
+                    onClick={() => runAction('assign')}
+                  >
+                    {complaint.assignedStaffId ? 'Reassign' : 'Assign'}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="form-group">
-              <label className="form-label" htmlFor="admin-note-input">Action / Resolution Note</label>
-              <input
-                id="admin-note-input"
-                type="text"
-                className="form-input"
-                placeholder="e.g. Work order issued to Facilities maintenance team"
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
+              <label className="form-label" htmlFor="action-note-input">Note</label>
+              <textarea
+                id="action-note-input"
+                className="form-textarea"
+                rows={2}
+                placeholder={userRole === 'staff' ? 'e.g. Replaced the faulty cable and tested the projector' : 'e.g. Confirmed on site by the Office of Student Affairs'}
+                value={actionNote}
+                onChange={(e) => setActionNote(e.target.value)}
               />
+              <div className="form-help">{noteHint}</div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '14px' }}>
-              <button type="button" className="btn-secondary" onClick={onClose}>
-                Cancel
+            {formError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-primary)', marginBottom: '8px' }}>
+                <span className="dot dot-highpriority" aria-hidden="true" />
+                {formError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn-text"
+                disabled={isSubmitting}
+                onClick={() => runAction('note')}
+              >
+                Add note only
               </button>
-              <button type="submit" className="btn-primary">
-                Save & Update Ticket
-              </button>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {buttonActions.map(action => (
+                  <button
+                    key={action}
+                    type="button"
+                    className={ACTION_BUTTONS[action].className}
+                    disabled={isSubmitting}
+                    onClick={() => runAction(action)}
+                  >
+                    {ACTION_BUTTONS[action].label}
+                  </button>
+                ))}
+              </div>
             </div>
           </form>
         )}

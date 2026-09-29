@@ -111,7 +111,7 @@ export function DonutChart({ data: dataProp }) {
             <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
               {hoveredIdx !== null ? categories[hoveredIdx].count : total}
             </div>
-            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
               {hoveredIdx !== null ? categories[hoveredIdx].name : 'Total'}
             </div>
           </div>
@@ -126,7 +126,7 @@ export function DonutChart({ data: dataProp }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                fontSize: '12.5px',
+                fontSize: '13px',
                 color: hoveredIdx === idx ? 'var(--text-primary)' : 'var(--text-secondary)',
                 fontWeight: hoveredIdx === idx ? 600 : 400,
                 cursor: 'pointer',

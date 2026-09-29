@@ -4,6 +4,7 @@ import { Topbar } from '../../components/layout/Topbar';
 import { AlertBanner } from '../../components/layout/AlertBanner';
 import { StatusDot } from '../../components/common/StatusDot';
 import { ComplaintDetailModal } from '../../components/complaints/ComplaintDetailModal';
+import { countByStatus } from '../../components/complaints/complaintWorkflow';
 import { Modal } from '../../components/common/Modal';
 
 export function StudentDashboard() {
@@ -21,10 +22,14 @@ export function StudentDashboard() {
       );
   const recentComplaints = myComplaints.slice(0, 5);
 
-  const pendingCount = myComplaints.filter(c => c.status === 'Pending').length;
-  const inProgressCount = myComplaints.filter(c => c.status === 'In Progress').length;
-  const resolvedCount = myComplaints.filter(c => c.status === 'Resolved').length;
-  const highPriorityCount = myComplaints.filter(c => c.status === 'High Priority').length;
+  const highPriorityCount = countByStatus(myComplaints, 'High Priority');
+
+  const statCards = [
+    { label: 'Under Review', filter: 'Under Review', dot: 'Pending', caption: 'Awaiting admin review' },
+    { label: 'With Staff', filter: 'With Staff', dot: 'In Progress', caption: 'Being handled' },
+    { label: 'Resolved', filter: 'Resolved', dot: 'Resolved', caption: 'This semester' },
+    { label: 'High Priority', filter: 'High Priority', dot: 'High Priority', caption: 'Escalated for attention' }
+  ];
 
   const latestAnnouncement = announcements[0];
 
@@ -41,65 +46,23 @@ export function StudentDashboard() {
 
         {/* 4 Stat Cards */}
         <div className="stat-grid-4">
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('student-complaints', 'Pending')}
-            role="button"
-            tabIndex={0}
-            title="View Pending Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">Pending</span>
-              <StatusDot status="Pending" showLabel={false} />
+          {statCards.map(card => (
+            <div
+              key={card.filter}
+              className="stat-card stat-card-clickable"
+              onClick={() => navigateWithFilter('student-complaints', card.filter)}
+              role="button"
+              tabIndex={0}
+              title={`View ${card.label} Complaints`}
+            >
+              <div className="stat-card-header">
+                <span className="stat-label">{card.label}</span>
+                <StatusDot status={card.dot} showLabel={false} />
+              </div>
+              <div className="stat-number">{countByStatus(myComplaints, card.filter)}</div>
+              <div className="stat-caption">{card.caption}</div>
             </div>
-            <div className="stat-number">{pendingCount}</div>
-            <div className="stat-caption">Awaiting assignment</div>
-          </div>
-
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('student-complaints', 'In Progress')}
-            role="button"
-            tabIndex={0}
-            title="View In Progress Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">In Progress</span>
-              <StatusDot status="In Progress" showLabel={false} />
-            </div>
-            <div className="stat-number">{inProgressCount}</div>
-            <div className="stat-caption">Being handled</div>
-          </div>
-
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('student-complaints', 'Resolved')}
-            role="button"
-            tabIndex={0}
-            title="View Resolved Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">Resolved</span>
-              <StatusDot status="Resolved" showLabel={false} />
-            </div>
-            <div className="stat-number">{resolvedCount}</div>
-            <div className="stat-caption">This semester</div>
-          </div>
-
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('student-complaints', 'High Priority')}
-            role="button"
-            tabIndex={0}
-            title="View High Priority Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">High Priority</span>
-              <StatusDot status="High Priority" showLabel={false} />
-            </div>
-            <div className="stat-number">{highPriorityCount}</div>
-            <div className="stat-caption">Needs immediate action</div>
-          </div>
+          ))}
         </div>
 
         {/* Split Layout: Recent Complaints Table + Latest Announcement Card */}
@@ -114,7 +77,7 @@ export function StudentDashboard() {
                 type="button"
                 className="btn-text"
                 onClick={() => navigateTo('student-complaints')}
-                style={{ fontSize: '12.5px' }}
+                style={{ fontSize: '13px' }}
               >
                 View all →
               </button>
@@ -185,11 +148,11 @@ export function StudentDashboard() {
                 <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', lineHeight: 1.35 }}>
                   {latestAnnouncement.title}
                 </h3>
-                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
                   {latestAnnouncement.snippet}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{latestAnnouncement.date}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{latestAnnouncement.date}</span>
                   <button
                     type="button"
                     className="btn-text"
@@ -229,7 +192,7 @@ export function StudentDashboard() {
               alt=""
               style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '6px', marginBottom: '16px' }}
             />
-            <p style={{ fontSize: '13.5px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
               {selectedAnnouncement.body || selectedAnnouncement.snippet}
             </p>
           </div>

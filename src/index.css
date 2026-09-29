@@ -5,7 +5,7 @@
    2. Zero gradients. Flat solid colors only.
    3. Zero icon glyphs / SVG icons / emoji. Text labels, dots, typographic chars.
    4. Status & urgency indicated strictly by dots, neutral text labels.
-   5. Serif display font for large headlines; clean sans-serif for all else.
+   5. One typeface (Inter) everywhere; hierarchy comes from size and weight.
    ========================================================================== */
 
 :root {
@@ -17,8 +17,7 @@
   --color-primary-border: rgba(79, 70, 229, 0.35);
 
   /* Fonts */
-  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Spacing */
   --sidebar-width: 250px;
@@ -157,17 +156,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
    Typography
    -------------------------------------------------------------------------- */
 .font-serif {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
 }
 .font-sans {
   font-family: var(--font-sans);
 }
 
 h1, h2, h3, .heading-serif {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   color: var(--text-primary);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
 }
 
 p {
@@ -185,7 +184,7 @@ p {
   background-color: var(--color-primary);
   color: #FFFFFF;
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: 14px;
   padding: 8px 16px;
   border-radius: 6px;
   border: 1px solid var(--color-primary);
@@ -208,7 +207,7 @@ p {
   background-color: var(--bg-card);
   color: var(--text-primary);
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: 14px;
   padding: 8px 16px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
@@ -228,7 +227,7 @@ p {
   background: transparent;
   color: var(--text-primary);
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: 14px;
   padding: 8px 16px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
@@ -268,7 +267,7 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary); /* Text stays neutral, never colored */
   white-space: nowrap;
@@ -297,12 +296,26 @@ p {
   background-color: var(--dot-highpriority);
   box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px rgb(79, 70, 229);
 }
+/* Hollow rings mark statuses waiting on someone: Verified (awaiting admin
+   decision), Assigned (awaiting staff), Rejected (closed without action). */
+.dot-verified {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--dot-pending);
+}
+.dot-assigned {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--dot-inprogress);
+}
+.dot-rejected {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--dot-resolved);
+}
 
 /* Pill / Neutral Badge */
 .badge-pill {
   display: inline-flex;
   align-items: center;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   padding: 2.5px 8px;
   border-radius: 4px;
@@ -345,7 +358,7 @@ p {
   color: var(--alert-text);
   padding: 12px 18px;
   border-radius: 7px;
-  font-size: 13.5px;
+  font-size: 14px;
   margin-bottom: 24px;
 }
 .alert-banner .alert-dot {
@@ -397,7 +410,7 @@ p {
 }
 .form-label {
   display: block;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 6px;
@@ -410,7 +423,7 @@ p {
   padding: 9px 13px;
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 13.5px;
+  font-size: 14px;
   transition: border-color 0.15s ease;
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
@@ -420,7 +433,7 @@ p {
   color: var(--text-muted);
 }
 .form-help {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 4px;
 }
@@ -523,7 +536,7 @@ p {
   color: var(--color-primary);
 }
 .sidebar-subtitle {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -542,7 +555,7 @@ p {
   padding: 10px 14px;
   border-radius: 6px;
   color: var(--text-secondary);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -576,7 +589,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -600,7 +613,7 @@ p {
   text-overflow: ellipsis;
 }
 .sign-out-btn {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   padding: 4px 8px;
   border-radius: 4px;
@@ -695,7 +708,7 @@ p {
 }
 
 .date-text {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-muted);
   padding: 6px 10px;
   border-radius: 6px;
@@ -778,7 +791,7 @@ p {
 }
 .marketing-link {
   color: var(--text-secondary);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   transition: color 0.15s ease;
 }
@@ -981,7 +994,7 @@ p {
   line-height: 1.35;
 }
 .announcement-snippet {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 16px;

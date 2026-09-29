@@ -4,6 +4,7 @@ import { Topbar } from '../../components/layout/Topbar';
 import { AlertBanner } from '../../components/layout/AlertBanner';
 import { StatusDot } from '../../components/common/StatusDot';
 import { ComplaintDetailModal } from '../../components/complaints/ComplaintDetailModal';
+import { countByStatus } from '../../components/complaints/complaintWorkflow';
 import { Modal } from '../../components/common/Modal';
 
 export function AdminDashboard() {
@@ -12,10 +13,14 @@ export function AdminDashboard() {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
-  const pendingCount = complaints.filter(c => c.status === 'Pending').length;
-  const inProgressCount = complaints.filter(c => c.status === 'In Progress').length;
-  const resolvedCount = complaints.filter(c => c.status === 'Resolved').length;
-  const highPriorityCount = complaints.filter(c => c.status === 'High Priority').length;
+  const highPriorityCount = countByStatus(complaints, 'High Priority');
+
+  const statCards = [
+    { label: 'Pending', filter: 'Pending', dot: 'Pending', caption: 'Awaiting verification' },
+    { label: 'Verified', filter: 'Verified', dot: 'Verified', caption: 'Ready to assign or resolve' },
+    { label: 'With Staff', filter: 'With Staff', dot: 'In Progress', caption: 'Assigned or in progress' },
+    { label: 'High Priority', filter: 'High Priority', dot: 'High Priority', caption: 'Needs immediate action' }
+  ];
 
   const recentComplaints = complaints.slice(0, 5);
   const latestAnnouncement = announcements[0];
@@ -33,65 +38,23 @@ export function AdminDashboard() {
 
         {/* 4 Stat Cards */}
         <div className="stat-grid-4">
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('admin-complaints', 'Pending')}
-            role="button"
-            tabIndex={0}
-            title="View Pending Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">Pending</span>
-              <StatusDot status="Pending" showLabel={false} />
+          {statCards.map(card => (
+            <div
+              key={card.filter}
+              className="stat-card stat-card-clickable"
+              onClick={() => navigateWithFilter('admin-complaints', card.filter)}
+              role="button"
+              tabIndex={0}
+              title={`View ${card.label} Complaints`}
+            >
+              <div className="stat-card-header">
+                <span className="stat-label">{card.label}</span>
+                <StatusDot status={card.dot} showLabel={false} />
+              </div>
+              <div className="stat-number">{countByStatus(complaints, card.filter)}</div>
+              <div className="stat-caption">{card.caption}</div>
             </div>
-            <div className="stat-number">{pendingCount}</div>
-            <div className="stat-caption">Awaiting assignment</div>
-          </div>
-
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('admin-complaints', 'In Progress')}
-            role="button"
-            tabIndex={0}
-            title="View In Progress Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">In Progress</span>
-              <StatusDot status="In Progress" showLabel={false} />
-            </div>
-            <div className="stat-number">{inProgressCount}</div>
-            <div className="stat-caption">Being handled</div>
-          </div>
-
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('admin-complaints', 'Resolved')}
-            role="button"
-            tabIndex={0}
-            title="View Resolved Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">Resolved</span>
-              <StatusDot status="Resolved" showLabel={false} />
-            </div>
-            <div className="stat-number">{resolvedCount}</div>
-            <div className="stat-caption">This month</div>
-          </div>
-
-          <div
-            className="stat-card stat-card-clickable"
-            onClick={() => navigateWithFilter('admin-complaints', 'High Priority')}
-            role="button"
-            tabIndex={0}
-            title="View High Priority Complaints"
-          >
-            <div className="stat-card-header">
-              <span className="stat-label">High Priority</span>
-              <StatusDot status="High Priority" showLabel={false} />
-            </div>
-            <div className="stat-number">{highPriorityCount}</div>
-            <div className="stat-caption">Needs immediate action</div>
-          </div>
+          ))}
         </div>
 
         {/* Split Layout: Recent Complaints with Assigned To Column + Side Panel */}
@@ -106,7 +69,7 @@ export function AdminDashboard() {
                 type="button"
                 className="btn-text"
                 onClick={() => navigateTo('admin-complaints')}
-                style={{ fontSize: '12.5px' }}
+                style={{ fontSize: '13px' }}
               >
                 View all →
               </button>
@@ -147,8 +110,8 @@ export function AdminDashboard() {
                       <td>
                         <StatusDot status={comp.status} />
                       </td>
-                      <td style={{ color: comp.assignedTo === 'Unassigned' ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-                        {comp.assignedTo}
+                      <td style={{ color: comp.assignedStaffId ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                        {comp.assignedStaffId ? comp.assignedTo : 'Unassigned'}
                       </td>
                       <td style={{ color: 'var(--text-muted)' }}>{comp.date}</td>
                     </tr>
@@ -182,11 +145,11 @@ export function AdminDashboard() {
                 <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', lineHeight: 1.35 }}>
                   {latestAnnouncement.title}
                 </h3>
-                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
                   {latestAnnouncement.snippet}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{latestAnnouncement.date}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{latestAnnouncement.date}</span>
                   <button
                     type="button"
                     className="btn-text"
@@ -224,7 +187,7 @@ export function AdminDashboard() {
               alt=""
               style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '6px', marginBottom: '16px' }}
             />
-            <p style={{ fontSize: '13.5px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
               {selectedAnnouncement.body || selectedAnnouncement.snippet}
             </p>
           </div>

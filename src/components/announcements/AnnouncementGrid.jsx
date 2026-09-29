@@ -133,7 +133,7 @@ export function AnnouncementGrid({ isAdmin = false }) {
                   <button
                     type="button"
                     className="btn-text"
-                    style={{ fontSize: '11.5px' }}
+                    style={{ fontSize: '12px' }}
                     onClick={() => openEditModal(item)}
                   >
                     Edit
@@ -141,7 +141,7 @@ export function AnnouncementGrid({ isAdmin = false }) {
                   <button
                     type="button"
                     className="btn-text btn-text-danger"
-                    style={{ fontSize: '11.5px' }}
+                    style={{ fontSize: '12px' }}
                     onClick={() => setDeleteTargetId(item.id)}
                   >
                     Delete
@@ -170,7 +170,7 @@ export function AnnouncementGrid({ isAdmin = false }) {
               alt=""
               style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '6px', marginBottom: '16px' }}
             />
-            <p style={{ fontSize: '13.5px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
               {activeAnnouncement.body || activeAnnouncement.snippet}
             </p>
           </div>
@@ -282,7 +282,7 @@ export function AnnouncementGrid({ isAdmin = false }) {
         maxWidth="420px"
       >
         <div>
-          <p style={{ fontSize: '13.5px', color: 'var(--text-primary)', marginBottom: '20px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '20px' }}>
             Are you sure you want to delete this announcement? This action will remove it for all students and faculty.
           </p>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>

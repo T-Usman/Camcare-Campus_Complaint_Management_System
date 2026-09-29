@@ -2,10 +2,9 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 
 export function Sidebar() {
-  const { userRole, currentPage, navigateTo, logout, studentUser, adminUser } = useApp();
+  const { userRole, currentPage, navigateTo, logout, studentUser, adminUser, staffUser } = useApp();
 
-  const isStudent = userRole === 'student';
-  const currentUser = isStudent ? studentUser : adminUser;
+  const currentUser = { student: studentUser, admin: adminUser, staff: staffUser }[userRole] || studentUser;
 
   const studentNavItems = [
     { id: 'student-dashboard', label: 'Dashboard' },
@@ -24,7 +23,19 @@ export function Sidebar() {
     { id: 'admin-profile', label: 'Profile' }
   ];
 
-  const navItems = isStudent ? studentNavItems : adminNavItems;
+  const staffNavItems = [
+    { id: 'staff-dashboard', label: 'Dashboard' },
+    { id: 'staff-complaints', label: 'My Assignments' },
+    { id: 'staff-announcements', label: 'Announcements' },
+    { id: 'staff-profile', label: 'Profile' }
+  ];
+
+  const navItems = { student: studentNavItems, admin: adminNavItems, staff: staffNavItems }[userRole] || studentNavItems;
+  const footerSubtitle = {
+    student: currentUser.id,
+    admin: 'Administrator',
+    staff: `Staff · ${currentUser.department || currentUser.id}`
+  }[userRole];
 
   return (
     <aside className="sidebar" aria-label="Sidebar navigation">
@@ -72,7 +83,7 @@ export function Sidebar() {
           <div className="user-footer-info">
             <div className="user-footer-name">{currentUser.name}</div>
             <div className="user-footer-sub">
-              {isStudent ? currentUser.id : 'Administrator'}
+              {footerSubtitle}
             </div>
           </div>
           <button

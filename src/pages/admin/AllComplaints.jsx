@@ -4,6 +4,7 @@ import { Topbar } from '../../components/layout/Topbar';
 import { StatusDot } from '../../components/common/StatusDot';
 import { UrgencyDot } from '../../components/common/UrgencyDot';
 import { ComplaintDetailModal } from '../../components/complaints/ComplaintDetailModal';
+import { STATUS_FILTER_OPTIONS, matchesStatusFilter } from '../../components/complaints/complaintWorkflow';
 
 export function AllComplaints() {
   const { complaints, staff, statusFilter } = useApp();
@@ -21,7 +22,7 @@ export function AllComplaints() {
   }
 
   const categories = ['All', 'Facilities', 'IT', 'Library', 'Catering', 'Welfare', 'Academic', 'Transport'];
-  const statuses = ['All', 'Pending', 'In Progress', 'High Priority', 'Resolved'];
+  const statuses = STATUS_FILTER_OPTIONS;
 
   const filtered = complaints.filter(c => {
     const matchesSearch = searchQuery === '' ||
@@ -35,8 +36,9 @@ export function AllComplaints() {
       c.category === selectedCategory ||
       (c.category && c.category.toLowerCase().startsWith(selectedCategory.toLowerCase()));
 
-    const matchesStatus = selectedStatus === 'All' || c.status === selectedStatus;
-    const matchesStaff = selectedStaff === 'All' || c.assignedTo === selectedStaff;
+    const matchesStatus = matchesStatusFilter(c.status, selectedStatus);
+    const matchesStaff = selectedStaff === 'All' ||
+      (selectedStaff === 'Unassigned' ? !c.assignedStaffId : c.assignedStaffId === selectedStaff);
 
     return matchesSearch && matchesCategory && matchesStatus && matchesStaff;
   });
@@ -102,7 +104,7 @@ export function AllComplaints() {
                 <option value="All">Staff: All</option>
                 <option value="Unassigned">Staff: Unassigned</option>
                 {staff.map(s => (
-                  <option key={s.id} value={s.name}>Staff: {s.name}</option>
+                  <option key={s.id} value={s.id}>Staff: {s.name}</option>
                 ))}
               </select>
             </div>
@@ -155,8 +157,8 @@ export function AllComplaints() {
                     <td>
                       <StatusDot status={comp.status} />
                     </td>
-                    <td style={{ color: comp.assignedTo === 'Unassigned' ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-                      {comp.assignedTo}
+                    <td style={{ color: comp.assignedStaffId ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                      {comp.assignedStaffId ? comp.assignedTo : 'Unassigned'}
                     </td>
                     <td style={{ color: 'var(--text-muted)' }}>{comp.date}</td>
                     <td style={{ textAlign: 'right' }}>

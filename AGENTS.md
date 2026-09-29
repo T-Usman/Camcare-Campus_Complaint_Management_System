@@ -10,7 +10,7 @@ src/
   pages/{student,admin}/ → role-based page components
   components/{common,layout,charts,complaints}/
 server/
-  index.js          → Express API (port 4000)
+  index.js          → Express API (port 8000 via server/.env)
   db.js             → MySQL connection pool + schema init (mysql2/promise)
   seed.js           → demo data seeder
 ```
@@ -20,7 +20,7 @@ server/
 npm install                          # root deps
 cd server && npm install             # server deps (separate install)
 npm run seed                         # seed/reset MySQL database
-npm start                            # frontend (:5173) + backend (:4000) via concurrently
+npm start                            # frontend (:5173) + backend (:8000) via concurrently
 npm run lint                         # oxlint (no ESLint/Prettier)
 ```
 
@@ -37,7 +37,7 @@ Run backend only: `cd server && npm run dev`
 
 **No router**: Navigation is state-based (`currentPage` string in context), not URL-based. Page names are like `student-dashboard`, `admin-complaints`, etc.
 
-**Auto-escalation**: `GET /api/complaints` triggers `runAutoEscalationCheck()` — complaints unanswered for 3+ days auto-transition to `High Priority`. This runs on every fetch, not as a cron.
+**Auto-escalation**: `GET /api/complaints` triggers `runAutoEscalationCheck()` — open complaints with no activity for 3+ days auto-transition to `High Priority`. This runs on every fetch, not as a cron.
 
 **Base64 image uploads**: Complaint photos are stored as base64 strings in MySQL (LONGTEXT). `express.json({ limit: '15mb' })` to accommodate.
 
@@ -45,17 +45,20 @@ Run backend only: `cd server && npm run dev`
 - **2 colors only**: `#4F46E5` (indigo) + monochrome grays. No red/green/orange/etc.
 - **Zero gradients, zero icons/emojis**. Use text labels and dot indicators.
 - Status/urgency dots carry color; text labels are always neutral gray.
-- Headings: Playfair Display (serif). Body: Inter (sans-serif).
+- One typeface: Inter (sans-serif) for headings and body.
 - Dark mode: `#08080C` page, `#0F0F14` cards, `#202026` borders. Light: `#F8F8FA` page, `#FFFFFF` cards.
 - CSS variables in `src/index.css` manage theming via `data-theme` attribute.
 
 ## Auth & Demo Accounts
-JWT stored in `localStorage` as `camcare_token`. Role stored as `camcare_role`.
+JWT stored in `sessionStorage` (per browser tab) as `camcare_token`. Role stored as `camcare_role`. Different tabs can be signed in as different roles.
 
 | Role    | Login ID         | Password     |
 |---------|------------------|--------------|
 | Student | `STU-2024-892`   | `password123`|
 | Admin   | `ADM-8801`       | `password123`|
+| Staff   | `STF-3001` to `STF-3005` | `password123`|
+
+Workflow: Student submits → Admin verifies/rejects → Admin resolves or assigns staff → assigned Staff starts and resolves.
 
 Seed is idempotent — safe to re-run `npm run seed` at any time.
 

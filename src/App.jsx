@@ -20,6 +20,12 @@ import { ReportsAnalytics } from './pages/admin/ReportsAnalytics';
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
 import { AdminProfile } from './pages/admin/AdminProfile';
 
+// Staff Pages
+import { StaffDashboard } from './pages/staff/StaffDashboard';
+import { StaffComplaints } from './pages/staff/StaffComplaints';
+import { StaffAnnouncements } from './pages/staff/StaffAnnouncements';
+import { StaffProfile } from './pages/staff/StaffProfile';
+
 function AppContent() {
   const { currentPage, userRole } = useApp();
 
@@ -71,8 +77,20 @@ function AppContent() {
       case 'admin-profile':
         return <AdminProfile />;
 
+      // Staff routes
+      case 'staff-dashboard':
+        return <StaffDashboard />;
+      case 'staff-complaints':
+        return <StaffComplaints />;
+      case 'staff-announcements':
+        return <StaffAnnouncements />;
+      case 'staff-profile':
+        return <StaffProfile />;
+
       default:
-        return userRole === 'admin' ? <AdminDashboard /> : <StudentDashboard />;
+        if (userRole === 'admin') return <AdminDashboard />;
+        if (userRole === 'staff') return <StaffDashboard />;
+        return <StudentDashboard />;
     }
   };
 

@@ -6,11 +6,12 @@ export function AuthPage() {
   const { login, register, navigateTo } = useApp();
 
   const [activeTab, setActiveTab] = useState('signin'); // 'signin' | 'register'
-  const [role, setRole] = useState('student'); // 'student' | 'admin'
+  const [role, setRole] = useState('student'); // 'student' | 'admin' | 'staff'
 
   // Form states
   const [studentId, setStudentId] = useState('STU-2024-892');
   const [adminEmail, setAdminEmail] = useState('r.asante@camcare.edu');
+  const [staffLoginId, setStaffLoginId] = useState('STF-3001');
   const [password, setPassword] = useState('password123');
 
   // Register form states
@@ -22,7 +23,7 @@ export function AuthPage() {
 
   const handleSignIn = async (e) => {
     e.preventDefault();
-    const loginId = role === 'student' ? studentId : adminEmail;
+    const loginId = { student: studentId, admin: adminEmail, staff: staffLoginId }[role];
     await login(role, { loginId, password });
   };
 
@@ -65,7 +66,7 @@ export function AuthPage() {
             type="button"
             className="btn-text"
             onClick={() => navigateTo('marketing')}
-            style={{ fontSize: '12.5px' }}
+            style={{ fontSize: '13px' }}
           >
             ← Back to Homepage
           </button>
@@ -98,7 +99,7 @@ export function AuthPage() {
               padding: '10px',
               textAlign: 'center',
               fontWeight: activeTab === 'signin' ? 600 : 500,
-              fontSize: '13.5px',
+              fontSize: '14px',
               color: activeTab === 'signin' ? 'var(--text-primary)' : 'var(--text-muted)',
               borderBottom: activeTab === 'signin' ? '2px solid var(--color-primary)' : '2px solid transparent'
             }}
@@ -114,7 +115,7 @@ export function AuthPage() {
               padding: '10px',
               textAlign: 'center',
               fontWeight: activeTab === 'register' ? 600 : 500,
-              fontSize: '13.5px',
+              fontSize: '14px',
               color: activeTab === 'register' ? 'var(--text-primary)' : 'var(--text-muted)',
               borderBottom: activeTab === 'register' ? '2px solid var(--color-primary)' : '2px solid transparent'
             }}
@@ -126,7 +127,7 @@ export function AuthPage() {
 
         {activeTab === 'signin' ? (
           <div>
-            {/* Secondary segmented toggle: Student vs Admin */}
+            {/* Secondary segmented toggle: Student / Staff / Admin */}
             <div className="auth-segmented-switch">
               <button
                 type="button"
@@ -135,6 +136,14 @@ export function AuthPage() {
                 onClick={() => setRole('student')}
               >
                 Student
+              </button>
+              <button
+                type="button"
+                id="auth-role-staff"
+                className={`auth-segment-btn ${role === 'staff' ? 'active' : ''}`}
+                onClick={() => setRole('staff')}
+              >
+                Staff
               </button>
               <button
                 type="button"
@@ -162,10 +171,25 @@ export function AuthPage() {
                     required
                   />
                 </div>
+              ) : role === 'staff' ? (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="staff-id-input">
+                    Staff ID or Email
+                  </label>
+                  <input
+                    id="staff-id-input"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. STF-3001"
+                    value={staffLoginId}
+                    onChange={(e) => setStaffLoginId(e.target.value)}
+                    required
+                  />
+                </div>
               ) : (
                 <div className="form-group">
                   <label className="form-label" htmlFor="admin-email-input">
-                    Staff Email or ID
+                    Admin Email or ID
                   </label>
                   <input
                     id="admin-email-input"
@@ -187,7 +211,7 @@ export function AuthPage() {
                   <a
                     href="#forgot"
                     onClick={(e) => e.preventDefault()}
-                    style={{ fontSize: '11.5px', color: 'var(--color-primary)' }}
+                    style={{ fontSize: '12px', color: 'var(--color-primary)' }}
                   >
                     Forgot password?
                   </a>
@@ -209,7 +233,7 @@ export function AuthPage() {
                 className="btn-primary"
                 style={{ width: '100%', padding: '10px', marginTop: '12px' }}
               >
-                {role === 'student' ? 'Sign In to CamCare' : 'Sign In as Administrator'}
+                {{ student: 'Sign In to CamCare', staff: 'Sign In as Staff', admin: 'Sign In as Administrator' }[role]}
               </button>
             </form>
 
@@ -225,21 +249,30 @@ export function AuthPage() {
               <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px' }}>
                 Quick 1-Click Demo Logins
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   id="quick-demo-student"
                   className="btn-secondary"
-                  style={{ flex: 1, fontSize: '11.5px', padding: '6px 8px' }}
+                  style={{ flex: 1, fontSize: '12px', padding: '6px 8px' }}
                   onClick={() => login('student')}
                 >
                   Student: Kwame Mensah
                 </button>
                 <button
                   type="button"
+                  id="quick-demo-staff"
+                  className="btn-secondary"
+                  style={{ flex: 1, fontSize: '12px', padding: '6px 8px' }}
+                  onClick={() => login('staff')}
+                >
+                  Staff: David Mensah
+                </button>
+                <button
+                  type="button"
                   id="quick-demo-admin"
                   className="btn-secondary"
-                  style={{ flex: 1, fontSize: '11.5px', padding: '6px 8px' }}
+                  style={{ flex: 1, fontSize: '12px', padding: '6px 8px' }}
                   onClick={() => login('admin')}
                 >
                   Admin: Dr. Rita Asante
@@ -247,7 +280,7 @@ export function AuthPage() {
               </div>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+            <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '13px', color: 'var(--text-secondary)' }}>
               Don't have an account?{' '}
               <span
                 style={{ color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 500 }}
@@ -277,7 +310,7 @@ export function AuthPage() {
 
             <div className="form-group">
               <label className="form-label" htmlFor="reg-id-input">
-                Student / Staff ID
+                Student ID
               </label>
               <input
                 id="reg-id-input"
@@ -342,7 +375,7 @@ export function AuthPage() {
               Create Account
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+            <div style={{ textAlign: 'center', marginTop: '18px', fontSize: '13px', color: 'var(--text-secondary)' }}>
               Already registered?{' '}
               <span
                 style={{ color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 500 }}

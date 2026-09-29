@@ -4,6 +4,7 @@ import { Topbar } from '../../components/layout/Topbar';
 import { StatusDot } from '../../components/common/StatusDot';
 import { UrgencyDot } from '../../components/common/UrgencyDot';
 import { ComplaintDetailModal } from '../../components/complaints/ComplaintDetailModal';
+import { STATUS_FILTER_OPTIONS, matchesStatusFilter } from '../../components/complaints/complaintWorkflow';
 
 export function MyComplaints() {
   const { complaints, studentUser, navigateTo, statusFilter, token, userRole } = useApp();
@@ -28,7 +29,7 @@ export function MyComplaints() {
       );
 
   const categories = ['All', 'Facilities', 'IT', 'Library', 'Catering', 'Welfare', 'Academic', 'Transport'];
-  const statuses = ['All', 'Pending', 'In Progress', 'High Priority', 'Resolved'];
+  const statuses = STATUS_FILTER_OPTIONS;
 
   // Filter logic
   const filteredComplaints = myComplaints.filter(c => {
@@ -41,7 +42,7 @@ export function MyComplaints() {
       c.category === selectedCategory ||
       (c.category && c.category.toLowerCase().startsWith(selectedCategory.toLowerCase()));
 
-    const matchesStatus = selectedStatus === 'All' || c.status === selectedStatus;
+    const matchesStatus = matchesStatusFilter(c.status, selectedStatus);
 
     return matchesSearch && matchesCategory && matchesStatus;
   });

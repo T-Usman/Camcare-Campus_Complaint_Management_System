@@ -98,9 +98,9 @@ export function NotificationControl() {
                   <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {n.title}
                   </span>
-                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{n.time}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{n.time}</span>
                 </div>
-                <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
                   {n.message}
                 </p>
               </div>

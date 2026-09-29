@@ -176,7 +176,7 @@ export function AdminProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Full Name & Title
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {adminUser.name}
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export function AdminProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Administrator ID
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {adminUser.id}
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export function AdminProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Official Email
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {adminUser.email}
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export function AdminProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Direct Phone
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {adminUser.phone}
                   </div>
                 </div>
@@ -212,7 +212,7 @@ export function AdminProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Division
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     {adminUser.department}
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export function AdminProfile() {
                   <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Campus Office
                   </span>
-                  <div style={{ fontSize: '14.5px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
                     Administration Building, Suite 302
                   </div>
                 </div>

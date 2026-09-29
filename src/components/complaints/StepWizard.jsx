@@ -233,11 +233,11 @@ export function StepWizard({ onComplete }) {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                         <span className={`dot ${opt.dotClass}`} aria-hidden="true" />
-                        <span style={{ fontWeight: 600, fontSize: '13.5px', color: 'var(--text-primary)' }}>
+                        <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
                           {opt.level}
                         </span>
                       </div>
-                      <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
                         {opt.caption}
                       </p>
                     </div>
@@ -277,7 +277,7 @@ export function StepWizard({ onComplete }) {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
               {errors.title && (
-                <div style={{ color: 'var(--color-primary)', fontSize: '11.5px', marginTop: '4px' }}>
+                <div style={{ color: 'var(--color-primary)', fontSize: '12px', marginTop: '4px' }}>
                   {errors.title}
                 </div>
               )}
@@ -296,7 +296,7 @@ export function StepWizard({ onComplete }) {
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               />
               {errors.location && (
-                <div style={{ color: 'var(--color-primary)', fontSize: '11.5px', marginTop: '4px' }}>
+                <div style={{ color: 'var(--color-primary)', fontSize: '12px', marginTop: '4px' }}>
                   {errors.location}
                 </div>
               )}
@@ -315,7 +315,7 @@ export function StepWizard({ onComplete }) {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
               {errors.description && (
-                <div style={{ color: 'var(--color-primary)', fontSize: '11.5px', marginTop: '4px' }}>
+                <div style={{ color: 'var(--color-primary)', fontSize: '12px', marginTop: '4px' }}>
                   {errors.description}
                 </div>
               )}
@@ -344,7 +344,7 @@ export function StepWizard({ onComplete }) {
                   >
                     Attach Photo
                   </label>
-                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginLeft: '12px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '12px' }}>
                     JPG, PNG, WebP up to 5MB
                   </span>
                 </div>
@@ -377,7 +377,7 @@ export function StepWizard({ onComplete }) {
                       <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
                         {formData.photoName}
                       </div>
-                      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
                         {formData.photoSize}
                       </div>
                     </div>
@@ -395,7 +395,7 @@ export function StepWizard({ onComplete }) {
               )}
 
               {photoError && (
-                <div style={{ color: 'var(--color-primary)', fontSize: '11.5px', marginTop: '6px' }}>
+                <div style={{ color: 'var(--color-primary)', fontSize: '12px', marginTop: '6px' }}>
                   {photoError}
                 </div>
               )}
@@ -470,7 +470,7 @@ export function StepWizard({ onComplete }) {
                 <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                   Location
                 </span>
-                <div style={{ fontSize: '13.5px', color: 'var(--text-primary)', marginTop: '2px' }}>
+                <div style={{ fontSize: '14px', color: 'var(--text-primary)', marginTop: '2px' }}>
                   {formData.location}
                 </div>
               </div>
@@ -506,7 +506,7 @@ export function StepWizard({ onComplete }) {
                       <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
                         {formData.photoName}
                       </div>
-                      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                         {formData.photoSize}
                       </div>
                     </div>
