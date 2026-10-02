@@ -5,7 +5,8 @@ import { AlertBanner } from '../../components/layout/AlertBanner';
 import { StatusDot } from '../../components/common/StatusDot';
 import { ComplaintDetailModal } from '../../components/complaints/ComplaintDetailModal';
 import { countByStatus } from '../../components/complaints/complaintWorkflow';
-import { Modal } from '../../components/common/Modal';
+import { AnnouncementDetailModal } from '../../components/announcements/AnnouncementDetailModal';
+import { formatAnnouncementDate } from '../../components/announcements/announcementUtils';
 
 export function AdminDashboard() {
   const { adminUser, complaints, announcements, navigateTo, navigateWithFilter } = useApp();
@@ -16,8 +17,8 @@ export function AdminDashboard() {
   const highPriorityCount = countByStatus(complaints, 'High Priority');
 
   const statCards = [
-    { label: 'Pending', filter: 'Pending', dot: 'Pending', caption: 'Awaiting verification' },
-    { label: 'Verified', filter: 'Verified', dot: 'Verified', caption: 'Ready to assign or resolve' },
+    { label: 'Pending', filter: 'Pending', dot: 'Pending', caption: 'New, awaiting review' },
+    { label: 'Unassigned', filter: 'Unassigned', dot: 'Verified', caption: 'Open with no staff member' },
     { label: 'With Staff', filter: 'With Staff', dot: 'In Progress', caption: 'Assigned or in progress' },
     { label: 'High Priority', filter: 'High Priority', dot: 'High Priority', caption: 'Needs immediate action' }
   ];
@@ -133,7 +134,7 @@ export function AdminDashboard() {
               <div style={{ position: 'relative', height: '140px' }}>
                 <img
                   src={latestAnnouncement.image}
-                  alt={latestAnnouncement.title}
+                  alt=""
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <span className="announcement-category-tag">
@@ -142,14 +143,14 @@ export function AdminDashboard() {
               </div>
 
               <div style={{ padding: '18px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', lineHeight: 1.35 }}>
+                <h3 className="announcement-title">
                   {latestAnnouncement.title}
                 </h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
+                <p className="announcement-snippet">
                   {latestAnnouncement.snippet}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{latestAnnouncement.date}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatAnnouncementDate(latestAnnouncement.date)}</span>
                   <button
                     type="button"
                     className="btn-text"
@@ -171,28 +172,10 @@ export function AdminDashboard() {
         onClose={() => setSelectedComplaint(null)}
       />
 
-      <Modal
-        isOpen={Boolean(selectedAnnouncement)}
+      <AnnouncementDetailModal
+        announcement={selectedAnnouncement}
         onClose={() => setSelectedAnnouncement(null)}
-        title={selectedAnnouncement?.title || 'Announcement'}
-      >
-        {selectedAnnouncement && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <span className="badge-pill">{selectedAnnouncement.category}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{selectedAnnouncement.date}</span>
-            </div>
-            <img
-              src={selectedAnnouncement.image}
-              alt=""
-              style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '6px', marginBottom: '16px' }}
-            />
-            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
-              {selectedAnnouncement.body || selectedAnnouncement.snippet}
-            </p>
-          </div>
-        )}
-      </Modal>
+      />
     </div>
   );
 }

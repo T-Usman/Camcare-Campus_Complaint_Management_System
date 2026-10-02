@@ -81,8 +81,9 @@ function getAllowedActions(comp, role) {
 
   if (role === 'admin') {
     switch (comp.status) {
+      // Verifying is not a separate step: assigning (or resolving) an
+      // unverified complaint verifies it in the same action.
       case 'Pending':
-        return ['verify', 'reject', 'assign', 'resolve', 'note'];
       case 'Verified':
         return ['assign', 'resolve', 'reject', 'note'];
       case 'Assigned':
@@ -91,7 +92,7 @@ function getAllowedActions(comp, role) {
       case 'High Priority':
         return assigned
           ? ['assign', 'resolve', 'note']
-          : ['verify', 'reject', 'assign', 'resolve', 'note'];
+          : ['assign', 'resolve', 'reject', 'note'];
       default:
         return [];
     }
@@ -115,17 +116,22 @@ function getAllowedActions(comp, role) {
 // --------------------------------------------------------------------------
 // Business Logic: 3+ Days Unanswered Auto-Escalation Check
 // --------------------------------------------------------------------------
+const ESCALATION_CONDITION = `status IN ('Pending', 'Verified', 'Assigned', 'In Progress')
+      AND last_activity_at <= NOW() - INTERVAL 3 DAY`;
+
 async function runAutoEscalationCheck() {
-  const eligible = await query(`
-    SELECT id
-    FROM complaints
-    WHERE status IN ('Pending', 'Verified', 'Assigned', 'In Progress')
-      AND last_activity_at <= NOW() - INTERVAL 3 DAY
-  `);
+  const eligible = await query(`SELECT id FROM complaints WHERE ${ESCALATION_CONDITION}`);
 
   for (const item of eligible) {
-    await query("UPDATE complaints SET status = 'High Priority', last_activity_at = NOW() WHERE id = ?", [item.id]);
-    await addTimelineEntry(item.id, 'Escalated', 'Automatically escalated to High Priority \u2014 no activity for more than 3 days.', 'System');
+    // Re-check the condition in the UPDATE so concurrent requests (e.g. the
+    // two complaint fetches fired on login) escalate each complaint only once.
+    const result = await query(
+      `UPDATE complaints SET status = 'High Priority', last_activity_at = NOW() WHERE id = ? AND ${ESCALATION_CONDITION}`,
+      [item.id]
+    );
+    if (result.affectedRows === 1) {
+      await addTimelineEntry(item.id, 'Escalated', 'Automatically escalated to High Priority \u2014 no activity for more than 3 days.', 'System');
+    }
   }
 }
 
@@ -277,6 +283,8 @@ app.get('/api/complaints', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/complaints/:id', authenticateToken, async (req, res) => {
+  await runAutoEscalationCheck();
+
   const comp = await getComplaintWithTimeline(req.params.id);
   if (!comp) {
     return res.status(404).json({ error: 'Complaint not found' });
@@ -319,7 +327,21 @@ app.post('/api/complaints', authenticateToken, requireRole('student'), async (re
   res.status(201).json(created);
 });
 
-// Workflow actions: verify | reject | assign | start | resolve | note
+// Adds the 'Verified' timeline step when an admin acts on a complaint nobody
+// has verified yet: a new Pending one, or one auto-escalated to High Priority
+// before it was ever verified or assigned.
+async function recordVerificationIfNeeded(comp, actor) {
+  if (comp.assigned_staff_id || !['Pending', 'High Priority'].includes(comp.status)) return;
+  const rows = await query(
+    "SELECT 1 FROM complaint_timeline WHERE complaint_id = ? AND step = 'Verified' LIMIT 1",
+    [comp.id]
+  );
+  if (rows.length === 0) {
+    await addTimelineEntry(comp.id, 'Verified', 'Complaint verified by administration', actor);
+  }
+}
+
+// Workflow actions: reject | assign (verifies if needed) | start | resolve | note
 // Body: { action, staffId?, note? }
 app.patch('/api/complaints/:id', authenticateToken, requireRole('admin', 'staff'), async (req, res) => {
   const complaintId = req.params.id;
@@ -345,12 +367,6 @@ app.patch('/api/complaints/:id', authenticateToken, requireRole('admin', 'staff'
     query('UPDATE complaints SET status = ?, last_activity_at = NOW() WHERE id = ?', [status, complaintId]);
 
   switch (action) {
-    case 'verify': {
-      await setStatus('Verified');
-      await addTimelineEntry(complaintId, 'Verified', note || 'Complaint verified by administration', actor);
-      break;
-    }
-
     case 'reject': {
       if (!note) {
         return res.status(400).json({ error: 'A reason is required to reject a complaint' });
@@ -369,9 +385,7 @@ app.patch('/api/complaints/:id', authenticateToken, requireRole('admin', 'staff'
       if (member.id === comp.assigned_staff_id) {
         return res.status(400).json({ error: `Complaint is already assigned to ${member.name}` });
       }
-      if (comp.status === 'Pending') {
-        await addTimelineEntry(complaintId, 'Verified', 'Complaint verified by administration', actor);
-      }
+      await recordVerificationIfNeeded(comp, actor);
       await query(
         "UPDATE complaints SET status = 'Assigned', assigned_staff_id = ?, assigned_to = ?, last_activity_at = NOW() WHERE id = ?",
         [member.id, member.name, complaintId]
@@ -391,8 +405,8 @@ app.patch('/api/complaints/:id', authenticateToken, requireRole('admin', 'staff'
       if (role === 'staff' && !note) {
         return res.status(400).json({ error: 'Describe how the issue was resolved' });
       }
-      if (role === 'admin' && comp.status === 'Pending') {
-        await addTimelineEntry(complaintId, 'Verified', 'Complaint verified by administration', actor);
+      if (role === 'admin') {
+        await recordVerificationIfNeeded(comp, actor);
       }
       await setStatus('Resolved');
       await addTimelineEntry(complaintId, 'Resolved', note || `Resolved by ${actor}`, actor);
@@ -477,17 +491,47 @@ app.post('/api/staff', authenticateToken, requireAdmin, async (req, res) => {
 // --------------------------------------------------------------------------
 // Announcements Routes
 // --------------------------------------------------------------------------
+const ANNOUNCEMENT_FIELDS = {
+  title: { label: 'Title', max: 255 },
+  category: { label: 'Category', max: 100 },
+  snippet: { label: 'Summary', max: 1000 },
+  body: { label: 'Full text', max: 10000 },
+  image: { label: 'Image', max: 255 }
+};
+
+// Trims the announcement fields present in `input`. With `requireAll`, every
+// field except image must be present; either way a present field may not be
+// blank or over its length limit. Returns { values } or { error }.
+function readAnnouncementFields(input, requireAll) {
+  const values = {};
+  for (const [key, { label, max }] of Object.entries(ANNOUNCEMENT_FIELDS)) {
+    const raw = input?.[key];
+    if (raw === undefined || raw === null) {
+      if (requireAll && key !== 'image') return { error: `${label} is required` };
+      values[key] = null;
+      continue;
+    }
+    const value = String(raw).trim();
+    if (!value) return { error: `${label} cannot be empty` };
+    if (value.length > max) return { error: `${label} must be at most ${max} characters` };
+    values[key] = value;
+  }
+  return { values };
+}
+
 app.get('/api/announcements', async (req, res) => {
-  const rows = await query('SELECT * FROM announcements ORDER BY date DESC');
+  const rows = await query(
+    'SELECT id, title, category, date, image, snippet, body FROM announcements ORDER BY date DESC, created_at DESC, id DESC'
+  );
   res.json(rows);
 });
 
 app.post('/api/announcements', authenticateToken, requireAdmin, async (req, res) => {
-  const { title, category, snippet, body, image } = req.body;
-
-  if (!title || !category || !snippet || !body) {
-    return res.status(400).json({ error: 'Title, category, snippet, and body are required' });
+  const { values, error } = readAnnouncementFields(req.body, true);
+  if (error) {
+    return res.status(400).json({ error });
   }
+  const { title, category, snippet, body, image } = values;
 
   const id = `ann-${Date.now()}`;
   const dateStr = new Date().toISOString().split('T')[0];
@@ -497,13 +541,17 @@ app.post('/api/announcements', authenticateToken, requireAdmin, async (req, res)
     [id, title, category, dateStr, image || '/images/campus-hero.jpg', snippet, body]
   );
 
-  const created = await query('SELECT * FROM announcements WHERE id = ?', [id]);
+  const created = await query('SELECT id, title, category, date, image, snippet, body FROM announcements WHERE id = ?', [id]);
   res.status(201).json(created[0]);
 });
 
 app.patch('/api/announcements/:id', authenticateToken, requireAdmin, async (req, res) => {
   const annId = req.params.id;
-  const { title, category, snippet, body, image } = req.body;
+  const { values, error } = readAnnouncementFields(req.body, false);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+  const { title, category, snippet, body, image } = values;
 
   const existing = await query('SELECT id FROM announcements WHERE id = ?', [annId]);
   if (existing.length === 0) {
@@ -521,7 +569,7 @@ app.patch('/api/announcements/:id', authenticateToken, requireAdmin, async (req,
     [title, category, snippet, body, image, annId]
   );
 
-  const updated = await query('SELECT * FROM announcements WHERE id = ?', [annId]);
+  const updated = await query('SELECT id, title, category, date, image, snippet, body FROM announcements WHERE id = ?', [annId]);
   res.json(updated[0]);
 });
 

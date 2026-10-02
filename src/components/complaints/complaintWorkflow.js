@@ -2,9 +2,10 @@
 // the server is the source of truth; this copy drives which buttons are shown
 // and the offline fallback.
 //
-//   Student submits (Pending) -> Admin verifies (Verified) or rejects (Rejected)
-//   -> Admin resolves directly (Resolved) or assigns staff (Assigned)
+//   Student submits (Pending) -> Admin rejects (Rejected), resolves directly
+//   (Resolved), or verifies and assigns staff in one step (Assigned)
 //   -> Assigned staff starts work (In Progress) and resolves (Resolved).
+// 'Verified' is only reached by complaints verified before that merge.
 // High Priority is set by auto-escalation after 3 days without activity.
 
 export const COMPLAINT_STATUSES = [
@@ -25,8 +26,9 @@ export function getAllowedActions(complaint, role) {
 
   if (role === 'admin') {
     switch (complaint.status) {
+      // Verifying is not a separate step: assigning (or resolving) an
+      // unverified complaint verifies it in the same action.
       case 'Pending':
-        return ['verify', 'reject', 'assign', 'resolve', 'note'];
       case 'Verified':
         return ['assign', 'resolve', 'reject', 'note'];
       case 'Assigned':
@@ -35,7 +37,7 @@ export function getAllowedActions(complaint, role) {
       case 'High Priority':
         return assigned
           ? ['assign', 'resolve', 'note']
-          : ['verify', 'reject', 'assign', 'resolve', 'note'];
+          : ['assign', 'resolve', 'reject', 'note'];
       default:
         return [];
     }
@@ -69,12 +71,37 @@ export const STATUS_GROUPS = {
 
 export const STATUS_FILTER_OPTIONS = ['All', ...Object.keys(STATUS_GROUPS), ...COMPLAINT_STATUSES];
 
+// Filters that look at more than the status (admin views only)
+export const COMPLAINT_FILTERS = {
+  Unassigned: c => OPEN_STATUSES.includes(c.status) && !c.assignedStaffId
+};
+
+export const ADMIN_FILTER_OPTIONS = [
+  'All',
+  ...Object.keys(STATUS_GROUPS),
+  ...Object.keys(COMPLAINT_FILTERS),
+  ...COMPLAINT_STATUSES
+];
+
 export function matchesStatusFilter(status, filter) {
   if (!filter || filter === 'All') return true;
   if (STATUS_GROUPS[filter]) return STATUS_GROUPS[filter].includes(status);
   return status === filter;
 }
 
+export function matchesComplaintFilter(complaint, filter) {
+  if (COMPLAINT_FILTERS[filter]) return COMPLAINT_FILTERS[filter](complaint);
+  return matchesStatusFilter(complaint.status, filter);
+}
+
 export function countByStatus(complaints, filter) {
-  return complaints.filter(c => matchesStatusFilter(c.status, filter)).length;
+  return complaints.filter(c => matchesComplaintFilter(c, filter)).length;
+}
+
+// True when acting on this complaint will also record it as verified. Mirrors
+// recordVerificationIfNeeded() in server/index.js.
+export function needsVerification(complaint) {
+  if (!complaint || complaint.assignedStaffId) return false;
+  if (!['Pending', 'High Priority'].includes(complaint.status)) return false;
+  return !(complaint.timeline || []).some(t => t.step === 'Verified');
 }

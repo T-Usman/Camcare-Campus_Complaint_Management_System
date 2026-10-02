@@ -5,7 +5,8 @@ import { AlertBanner } from '../../components/layout/AlertBanner';
 import { StatusDot } from '../../components/common/StatusDot';
 import { ComplaintDetailModal } from '../../components/complaints/ComplaintDetailModal';
 import { countByStatus } from '../../components/complaints/complaintWorkflow';
-import { Modal } from '../../components/common/Modal';
+import { AnnouncementDetailModal } from '../../components/announcements/AnnouncementDetailModal';
+import { formatAnnouncementDate } from '../../components/announcements/announcementUtils';
 
 export function StudentDashboard() {
   const { studentUser, complaints, announcements, navigateTo, navigateWithFilter, token, userRole } = useApp();
@@ -136,7 +137,7 @@ export function StudentDashboard() {
               <div style={{ position: 'relative', height: '140px' }}>
                 <img
                   src={latestAnnouncement.image}
-                  alt={latestAnnouncement.title}
+                  alt=""
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <span className="announcement-category-tag">
@@ -145,14 +146,14 @@ export function StudentDashboard() {
               </div>
 
               <div style={{ padding: '18px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', lineHeight: 1.35 }}>
+                <h3 className="announcement-title">
                   {latestAnnouncement.title}
                 </h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
+                <p className="announcement-snippet">
                   {latestAnnouncement.snippet}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{latestAnnouncement.date}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatAnnouncementDate(latestAnnouncement.date)}</span>
                   <button
                     type="button"
                     className="btn-text"
@@ -176,28 +177,10 @@ export function StudentDashboard() {
       />
 
       {/* Announcement Modal */}
-      <Modal
-        isOpen={Boolean(selectedAnnouncement)}
+      <AnnouncementDetailModal
+        announcement={selectedAnnouncement}
         onClose={() => setSelectedAnnouncement(null)}
-        title={selectedAnnouncement?.title || 'Announcement'}
-      >
-        {selectedAnnouncement && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <span className="badge-pill">{selectedAnnouncement.category}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{selectedAnnouncement.date}</span>
-            </div>
-            <img
-              src={selectedAnnouncement.image}
-              alt=""
-              style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '6px', marginBottom: '16px' }}
-            />
-            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-primary)' }}>
-              {selectedAnnouncement.body || selectedAnnouncement.snippet}
-            </p>
-          </div>
-        )}
-      </Modal>
+      />
     </div>
   );
 }

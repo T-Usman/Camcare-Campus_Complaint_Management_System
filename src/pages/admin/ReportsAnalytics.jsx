@@ -4,12 +4,14 @@ import { GroupedBarChart } from '../../components/charts/GroupedBarChart';
 import { DonutChart } from '../../components/charts/DonutChart';
 import { TrendLineChart } from '../../components/charts/TrendLineChart';
 import { useApp } from '../../context/AppContext';
+import { exportReportPdf } from '../../components/reports/reportPdf';
 
 export function ReportsAnalytics() {
-  const { apiFetch, token } = useApp();
+  const { apiFetch, token, complaints, staff, adminUser, showToast } = useApp();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +40,22 @@ export function ReportsAnalytics() {
 
   const metrics = summary?.metrics;
 
+  // Only live data is exported: the placeholder chart figures shown when the
+  // API is down never end up in a PDF.
+  const handleExportPdf = async () => {
+    if (!summary || exporting) return;
+    setExporting(true);
+    try {
+      await exportReportPdf({ summary, complaints, staff, preparedBy: adminUser?.name });
+      showToast('Report exported as PDF');
+    } catch (err) {
+      console.warn('PDF export failed:', err);
+      showToast('Could not export the report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div>
       <Topbar
@@ -46,6 +64,23 @@ export function ReportsAnalytics() {
       />
 
       <main className="page-body">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          {!summary && !loading && (
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              Export is available once live data loads.
+            </span>
+          )}
+          <button
+            type="button"
+            id="export-report-pdf-btn"
+            className="btn-primary"
+            onClick={handleExportPdf}
+            disabled={!summary || exporting}
+          >
+            {exporting ? 'Exporting…' : 'Export PDF'}
+          </button>
+        </div>
+
         {error && (
           <div className="card" style={{ marginBottom: '24px', color: 'var(--text-secondary)' }}>
             Couldn't load live report data ({error}). Showing placeholder figures below.

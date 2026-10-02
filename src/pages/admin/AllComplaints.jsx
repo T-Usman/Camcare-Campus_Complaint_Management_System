@@ -4,7 +4,7 @@ import { Topbar } from '../../components/layout/Topbar';
 import { StatusDot } from '../../components/common/StatusDot';
 import { UrgencyDot } from '../../components/common/UrgencyDot';
 import { ComplaintDetailModal } from '../../components/complaints/ComplaintDetailModal';
-import { STATUS_FILTER_OPTIONS, matchesStatusFilter } from '../../components/complaints/complaintWorkflow';
+import { ADMIN_FILTER_OPTIONS, matchesComplaintFilter } from '../../components/complaints/complaintWorkflow';
 
 export function AllComplaints() {
   const { complaints, staff, statusFilter } = useApp();
@@ -22,7 +22,7 @@ export function AllComplaints() {
   }
 
   const categories = ['All', 'Facilities', 'IT', 'Library', 'Catering', 'Welfare', 'Academic', 'Transport'];
-  const statuses = STATUS_FILTER_OPTIONS;
+  const statuses = ADMIN_FILTER_OPTIONS;
 
   const filtered = complaints.filter(c => {
     const matchesSearch = searchQuery === '' ||
@@ -36,7 +36,7 @@ export function AllComplaints() {
       c.category === selectedCategory ||
       (c.category && c.category.toLowerCase().startsWith(selectedCategory.toLowerCase()));
 
-    const matchesStatus = matchesStatusFilter(c.status, selectedStatus);
+    const matchesStatus = matchesComplaintFilter(c, selectedStatus);
     const matchesStaff = selectedStaff === 'All' ||
       (selectedStaff === 'Unassigned' ? !c.assignedStaffId : c.assignedStaffId === selectedStaff);
 

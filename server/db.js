@@ -107,7 +107,8 @@ export async function initDb() {
       date VARCHAR(20) NOT NULL,
       image VARCHAR(255) NOT NULL,
       snippet TEXT NOT NULL,
-      body TEXT NOT NULL
+      body TEXT NOT NULL,
+      created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
@@ -116,6 +117,8 @@ export async function initDb() {
   await addColumnIfMissing('staff', 'user_id', 'VARCHAR(255) NULL');
   await addColumnIfMissing('complaints', 'assigned_staff_id', 'VARCHAR(255) NULL');
   await addColumnIfMissing('complaint_timeline', 'actor', 'VARCHAR(255) NULL');
+  // Orders announcements posted on the same day (`date` has no time part).
+  await addColumnIfMissing('announcements', 'created_at', 'DATETIME NULL DEFAULT CURRENT_TIMESTAMP');
 
   // Some databases were upgraded by an earlier build in which
   // complaints.assigned_staff_id was a foreign key to users.id. It now holds

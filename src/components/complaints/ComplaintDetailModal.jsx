@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Modal } from '../common/Modal';
 import { StatusDot } from '../common/StatusDot';
 import { UrgencyDot } from '../common/UrgencyDot';
-import { getAllowedActions, isNoteRequired } from './complaintWorkflow';
+import { getAllowedActions, isNoteRequired, needsVerification } from './complaintWorkflow';
 
 const NOTE_REQUIRED_MESSAGES = {
   reject: 'Enter a reason before rejecting this complaint.',
@@ -34,6 +34,9 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
   const canAssign = allowedActions.includes('assign');
   const buttonActions = allowedActions.filter(a => a !== 'assign' && a !== 'note');
   const assignableStaff = staff.filter(s => s.id !== complaint.assignedStaffId);
+  // Admin verifies a new complaint and assigns it in one action
+  const verifiesOnAssign = userRole === 'admin' && needsVerification(complaint);
+  const assignLabel = complaint.assignedStaffId ? 'Reassign' : (verifiesOnAssign ? 'Verify & Assign' : 'Assign');
 
   const runAction = async (action) => {
     const note = actionNote.trim();
@@ -58,7 +61,6 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
   };
 
   const ACTION_BUTTONS = {
-    verify: { label: 'Verify Complaint', className: 'btn-primary' },
     start: { label: 'Start Work', className: 'btn-primary' },
     resolve: {
       label: 'Mark Resolved',
@@ -250,7 +252,9 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
             {canAssign && (
               <div className="form-group">
                 <label className="form-label" htmlFor="action-assign-staff">
-                  {complaint.assignedStaffId ? 'Reassign to Staff Member' : 'Assign to Staff Member'}
+                  {complaint.assignedStaffId
+                    ? 'Reassign to Staff Member'
+                    : (verifiesOnAssign ? 'Verify and Assign to Staff Member' : 'Assign to Staff Member')}
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <select
@@ -273,9 +277,14 @@ export function ComplaintDetailModal({ complaint, isOpen, onClose }) {
                     disabled={isSubmitting}
                     onClick={() => runAction('assign')}
                   >
-                    {complaint.assignedStaffId ? 'Reassign' : 'Assign'}
+                    {isSubmitting ? 'Saving…' : assignLabel}
                   </button>
                 </div>
+                {verifiesOnAssign && (
+                  <div className="form-help">
+                    Verifies the complaint and hands it to the selected staff member in one step.
+                  </div>
+                )}
               </div>
             )}
 

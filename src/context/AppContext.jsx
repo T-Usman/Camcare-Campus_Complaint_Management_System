@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getAllowedActions } from '../components/complaints/complaintWorkflow';
+import { getAllowedActions, needsVerification } from '../components/complaints/complaintWorkflow';
 
 const AppContext = createContext(null);
 
@@ -579,10 +579,6 @@ export function AppProvider({ children }) {
     let changes = {};
 
     switch (action) {
-      case 'verify':
-        changes = { status: 'Verified' };
-        push('Verified', note || 'Complaint verified by administration');
-        break;
       case 'reject':
         changes = { status: 'Rejected' };
         push('Rejected', note);
@@ -590,7 +586,7 @@ export function AppProvider({ children }) {
       case 'assign': {
         const member = staff.find(s => s.id === staffId);
         if (!member) return complaint;
-        if (complaint.status === 'Pending') push('Verified', 'Complaint verified by administration');
+        if (needsVerification(complaint)) push('Verified', 'Complaint verified by administration');
         changes = { status: 'Assigned', assignedStaffId: member.id, assignedTo: member.name };
         push(complaint.assignedStaffId ? 'Reassigned' : 'Assigned', `Assigned to ${member.name}${note ? ` — ${note}` : ''}`);
         break;
@@ -600,7 +596,7 @@ export function AppProvider({ children }) {
         push('In Progress', note || `Work started by ${actor}`);
         break;
       case 'resolve':
-        if (userRole === 'admin' && complaint.status === 'Pending') push('Verified', 'Complaint verified by administration');
+        if (userRole === 'admin' && needsVerification(complaint)) push('Verified', 'Complaint verified by administration');
         changes = { status: 'Resolved' };
         push('Resolved', note || `Resolved by ${actor}`);
         break;
@@ -615,7 +611,7 @@ export function AppProvider({ children }) {
   };
 
   // Run a workflow action on a complaint (admin or assigned staff).
-  // payload: { action: 'verify'|'reject'|'assign'|'start'|'resolve'|'note', staffId?, note? }
+  // payload: { action: 'reject'|'assign'|'start'|'resolve'|'note', staffId?, note? }
   const updateComplaint = async (id, payload) => {
     const successMessage = `Complaint ${id} updated successfully`;
 
@@ -668,10 +664,12 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Announcements CRUD (Admin)
+  // Announcements CRUD (Admin). Like complaint actions, these fall back to
+  // local state only on network errors; an HTTP error is shown as a toast.
+  // Each returns a truthy value on success and null on failure.
   const addAnnouncement = async (item) => {
-    try {
-      if (token) {
+    if (token) {
+      try {
         const created = await apiFetch('/api/announcements', {
           method: 'POST',
           body: JSON.stringify(item)
@@ -679,9 +677,13 @@ export function AppProvider({ children }) {
         setAnnouncements(prev => [created, ...prev]);
         showToast('New announcement published');
         return created;
+      } catch (err) {
+        if (!isNetworkError(err)) {
+          showToast(err.message);
+          return null;
+        }
+        console.warn('API add announcement failed, applying locally:', err.message);
       }
-    } catch (err) {
-      console.warn('API add announcement failed, applying locally:', err.message);
     }
 
     const newAnn = {
@@ -689,14 +691,14 @@ export function AppProvider({ children }) {
       ...item,
       date: new Date().toISOString().split('T')[0]
     };
-    setAnnouncements([newAnn, ...announcements]);
+    setAnnouncements(prev => [newAnn, ...prev]);
     showToast('New announcement published');
     return newAnn;
   };
 
   const editAnnouncement = async (id, updatedFields) => {
-    try {
-      if (token) {
+    if (token) {
+      try {
         const updated = await apiFetch(`/api/announcements/${id}`, {
           method: 'PATCH',
           body: JSON.stringify(updatedFields)
@@ -704,31 +706,41 @@ export function AppProvider({ children }) {
         setAnnouncements(prev => prev.map(a => a.id === id ? updated : a));
         showToast('Announcement updated');
         return updated;
+      } catch (err) {
+        if (!isNetworkError(err)) {
+          showToast(err.message);
+          return null;
+        }
+        console.warn('API edit announcement failed, applying locally:', err.message);
       }
-    } catch (err) {
-      console.warn('API edit announcement failed, applying locally:', err.message);
     }
 
     setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...updatedFields } : a));
     showToast('Announcement updated');
+    return { id, ...updatedFields };
   };
 
   const deleteAnnouncement = async (id) => {
-    try {
-      if (token) {
+    if (token) {
+      try {
         await apiFetch(`/api/announcements/${id}`, {
           method: 'DELETE'
         });
         setAnnouncements(prev => prev.filter(a => a.id !== id));
         showToast('Announcement removed');
-        return;
+        return true;
+      } catch (err) {
+        if (!isNetworkError(err)) {
+          showToast(err.message);
+          return null;
+        }
+        console.warn('API delete announcement failed, applying locally:', err.message);
       }
-    } catch (err) {
-      console.warn('API delete announcement failed, applying locally:', err.message);
     }
 
     setAnnouncements(prev => prev.filter(a => a.id !== id));
     showToast('Announcement removed');
+    return true;
   };
 
   // Update the signed-in user's profile (student, admin, or staff)

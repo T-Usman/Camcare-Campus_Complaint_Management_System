@@ -43,7 +43,7 @@ export function MarketingPage() {
               style={{ padding: '12px 24px', fontSize: '15px' }}
               onClick={() => navigateTo('auth')}
             >
-              Get Started Free
+              Get Started
             </button>
             <button
               type="button"
